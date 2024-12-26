@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link
+      rel="stylesheet"
+      href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+      integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+      crossorigin=""
+    />
+    <script
+      src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+      integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+      crossorigin=""
+    ></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Turf.js/6.5.0/turf.min.js"></script>
+
+    <style>
+      #map {
+        height: 500px;
+        /* background-color: red; */
+        width: 500px;
+        cursor: pointer;
+      }
+    </style>
+    <title>Document</title>
+  </head>
+  <body>
+    <div id="map"></div>
+    <div id="infoArea"></div>
+    <button id="clearBtn" onclick="clearArea()">Clear</button>
+  </body>
+
+  <script>
+    let coords = [];
+    let polygon;
+    let luas;
+
+    let map = L.map("map").setView(
+      [-6.906509860253546, 107.59645970788209],
+      13
+    );
+
+    L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
+      maxZoom: 20,
+      attribution:
+        '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+    }).addTo(map);
+
+    let myIcon = L.icon({
+      iconUrl: "/dot.png",
+      iconAnchor: [10, 10],
+    });
+
+    polygon = L.polygon(coords).addTo(map);
+
+    const onClick = (e) => {
+      const infoArea = document.getElementById("infoArea");
+      const newCoordinate = [e.latlng.lng, e.latlng.lat]; // lng, lat untuk GeoJSON
+      coords.push(newCoordinate);
+      polygon.setLatLngs(coords.map((c) => [c[1], c[0]])); // Kembalikan ke [lat, lng] untuk leaflet
+
+      if (coords.length > 2) {
+        const geoJsonPolygon = {
+          type: "Feature",
+          geometry: {
+            type: "Polygon",
+            coordinates: [[...coords, coords[0]]], // Tambahkan koordinat awal untuk membuat loop
+          },
+        };
+
+        const area = turf.area(geoJsonPolygon); // Hitung luas dalam meter persegi
+        luas = `Luas area: ${area} m²`;
+        infoArea.innerText = luas;
+      }
+    };
+
+    const clearArea = () => {
+      luas = null;
+      polygon.setLatLngs([]);
+    };
+
+    map.on("click", onClick);
+  </script>
+</html>
